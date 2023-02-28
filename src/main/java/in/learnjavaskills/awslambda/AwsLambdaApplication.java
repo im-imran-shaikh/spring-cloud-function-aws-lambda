@@ -10,6 +10,4 @@ public class AwsLambdaApplication
 	{
 		SpringApplication.run(AwsLambdaApplication.class, args); 
 	}
-	
-	
 }

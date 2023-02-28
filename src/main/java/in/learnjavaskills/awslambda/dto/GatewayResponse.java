@@ -21,4 +21,5 @@ public class GatewayResponse
 	private boolean isBase64Encoded;
 	private String variable1;
 	private String variable2;
+	private Map<String, String> payload;
 }
