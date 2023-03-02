@@ -6,12 +6,12 @@ import org.springframework.stereotype.Component;
 import lombok.Getter;
 import lombok.Setter;
 
-
 @Component
-@ConfigurationProperties(prefix = "environment")
+@ConfigurationProperties(prefix = "amazon.s3")
 @Getter
 @Setter
-public class EnvironmentVariable 
+public class AmazonS3DTO 
 {
-	private String activeProfile;
+	private String bucketName;
+	private String key;
 }

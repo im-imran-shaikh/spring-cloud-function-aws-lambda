@@ -6,12 +6,12 @@ import org.springframework.stereotype.Component;
 import lombok.Getter;
 import lombok.Setter;
 
-
+@ConfigurationProperties(prefix = "amazon.credentials")
 @Component
-@ConfigurationProperties(prefix = "environment")
 @Getter
 @Setter
-public class EnvironmentVariable 
+public class AmazonSdkCredentialsDTO 
 {
-	private String activeProfile;
+	private String accessKey;
+	private String secretKey;
 }

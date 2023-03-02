@@ -49,7 +49,7 @@
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -60,9 +60,17 @@
 			<artifactId>spring-boot-configuration-processor</artifactId>
 			<optional>true</optional>
 		</dependency>
+
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-java-sdk-s3</artifactId>
+			<version>1.12.416</version>
+		</dependency>
+
+
 	</dependencies>
-	
-	
+
+
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -76,7 +84,7 @@
 	</dependencyManagement>
 
 	<build>
-	<finalName>lambdafunction</finalName>
+		<finalName>lambdafunction</finalName>
 		<plugins>
 
 

@@ -1,24 +1,20 @@
 package in.learnjavaskills.awslambda.dto;
 
-import java.util.Map;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class GatewayResponse 
+@ToString
+public class GatewayRequest
 {
-	private String message;
-	private Integer statusCode;
-	private Map<String, String> header;
-	private boolean isBase64Encoded;
-	private String activeProfile;
-	private GatewayRequest event;
+	private String filename;
+	private String fileContent;
 }

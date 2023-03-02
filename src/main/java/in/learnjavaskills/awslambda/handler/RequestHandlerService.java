@@ -1,70 +1,97 @@
 package in.learnjavaskills.awslambda.handler;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.messaging.Message;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.amazonaws.services.lambda.runtime.Context;
-
+import in.learnjavaskills.awslambda.dto.AmazonS3DTO;
+import in.learnjavaskills.awslambda.dto.AmazonSdkCredentialsDTO;
 import in.learnjavaskills.awslambda.dto.EnvironmentVariable;
+import in.learnjavaskills.awslambda.dto.FileDetailsDTO;
+import in.learnjavaskills.awslambda.dto.GatewayRequest;
 import in.learnjavaskills.awslambda.dto.GatewayResponse;
+import in.learnjavaskills.awslambda.utility.FileOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Service
-@RequiredArgsConstructor
-public class RequestHandlerService implements Function<Message<Map<String, String>>, GatewayResponse>
+public class RequestHandlerService implements Function<GatewayRequest, GatewayResponse>
 {
 	private final EnvironmentVariable environmentVariable;
+	private final FileOperation fileOperation;
+	private final AmazonSdkCredentialsDTO amazonSdkCredentialsDto;
+	private final AmazonS3DTO amazonS3Dto;
+	
+	private final String filePath = "/tmp/";
 	private String ipAddress = "0.0.0.0";
 	
-	@Override
-	public GatewayResponse apply(Message<Map<String, String>> input) 
+	@Autowired
+	public RequestHandlerService(EnvironmentVariable environmentVariable, FileOperation fileOperation, 
+			AmazonSdkCredentialsDTO amazonSdkCredentialsDto, AmazonS3DTO amazonS3Dto)
 	{
-		return responseMapper(input);
+		this.environmentVariable = environmentVariable;
+		this.fileOperation = fileOperation;
+		this.amazonSdkCredentialsDto = amazonSdkCredentialsDto;
+		this.amazonS3Dto = amazonS3Dto;
+	}
+	
+	
+	@Override
+	public GatewayResponse apply(final GatewayRequest gatewayRequest) 
+	{
+		return responseMapper(gatewayRequest);
 	}
 
-	private GatewayResponse responseMapper(final Message<Map<String, String>> input)
+	private GatewayResponse responseMapper(final GatewayRequest gatewayRequest)
 	{
 		try { ipAddress = InetAddress.getLocalHost().getHostAddress().trim(); }
 		catch (UnknownHostException e) { log.error("Exception occur while fetching ip address ", e); }
-		
-		Map<String, String> payload = input.getPayload(); 
-		
-		log.info("Input request are printing");
-		payload.forEach((key, value) ->  log.info("KEY: " + key + " VALUE: " + value));
-		
-		Context context = input.getHeaders().get("aws-context", Context.class); // fetching context from the request header
-		
-		if (Objects.nonNull(context))
-		{
-			log.info("context printing");
-			String awsRequestId = context.getAwsRequestId();
-			String functionName = context.getFunctionName();
-			log.info("aws-request-id: " + awsRequestId + " and function-name: " + functionName);
-			
-			log.info("Function version : " + context.getFunctionVersion() + " memory limit: " + context.getMemoryLimitInMB());
-			
-			log.info("Remaining time in miili second: " +  context.getRemainingTimeInMillis());
-		}
 
-		return GatewayResponse.builder()
-				.statusCode(200)
-				.isBase64Encoded(false)
-				.message("SUCCESS")
-				.header(Collections.singletonMap("ip address", ipAddress))
-				.variable1(environmentVariable.getVariable1())
-				.variable2(environmentVariable.getVariable2())
-				.payload(payload)
+		try
+		{
+			log.info("Gateway Request : " + gatewayRequest.toString());
+			
+			String absoluteFilePath = filePath + gatewayRequest.getFilename();
+			log.info("absoluteFilePath : " + absoluteFilePath);
+			
+			Optional<File> file = fileOperation.generateFile(gatewayRequest.getFileContent(), absoluteFilePath);
+			
+			FileDetailsDTO fileDetailsDto = FileDetailsDTO.builder()
+				.bucketName(amazonS3Dto.getBucketName())
+				.key(amazonS3Dto.getKey())
+				.file(file)
+				.accessKey(amazonSdkCredentialsDto.getAccessKey())
+				.secretKey(amazonSdkCredentialsDto.getSecretKey())
 				.build();
+			
+			boolean isFileUploaded = fileOperation.uplaodToS3(fileDetailsDto);
+			
+			return GatewayResponse.builder()
+					.statusCode(200)
+					.isBase64Encoded(false)
+					.message(isFileUploaded ? "File Successfully uploaded in S3" : "Fail to upload file in S3")
+					.header(Collections.singletonMap("ip address", ipAddress))
+					.activeProfile(environmentVariable.getActiveProfile())
+					.build();
+		}
+		catch (Exception exception) 
+		{
+			log.error("Something went wrong in processing request, Inspect manually", exception);
+			return GatewayResponse.builder()
+					.statusCode(504)
+					.isBase64Encoded(false)
+					.message(exception.getMessage())
+					.header(Collections.singletonMap("ip address", ipAddress))
+					.build();
+					
+		}
 	}
 
 }
