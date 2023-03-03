@@ -17,6 +17,7 @@ import in.learnjavaskills.awslambda.dto.FileDetailsDTO;
 import in.learnjavaskills.awslambda.dto.GatewayRequest;
 import in.learnjavaskills.awslambda.dto.GatewayResponse;
 import in.learnjavaskills.awslambda.utility.FileOperation;
+import in.learnjavaskills.awslambda.utility.Utility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -30,7 +31,6 @@ public class RequestHandlerService implements Function<GatewayRequest, GatewayRe
 	private final AmazonS3DTO amazonS3Dto;
 	
 	private final String filePath = "/tmp/";
-	private String ipAddress = "0.0.0.0";
 	
 	@Autowired
 	public RequestHandlerService(EnvironmentVariable environmentVariable, FileOperation fileOperation, 
@@ -51,9 +51,6 @@ public class RequestHandlerService implements Function<GatewayRequest, GatewayRe
 
 	private GatewayResponse responseMapper(final GatewayRequest gatewayRequest)
 	{
-		try { ipAddress = InetAddress.getLocalHost().getHostAddress().trim(); }
-		catch (UnknownHostException e) { log.error("Exception occur while fetching ip address ", e); }
-
 		try
 		{
 			log.info("Gateway Request : " + gatewayRequest.toString());
@@ -71,13 +68,13 @@ public class RequestHandlerService implements Function<GatewayRequest, GatewayRe
 				.secretKey(amazonSdkCredentialsDto.getSecretKey())
 				.build();
 			
-			boolean isFileUploaded = fileOperation.uplaodToS3(fileDetailsDto);
+			boolean isFileUploaded = fileOperation.multiPartUploadToS3(fileDetailsDto);
 			
 			return GatewayResponse.builder()
 					.statusCode(200)
 					.isBase64Encoded(false)
 					.message(isFileUploaded ? "File Successfully uploaded in S3" : "Fail to upload file in S3")
-					.header(Collections.singletonMap("ip address", ipAddress))
+					.header(Collections.singletonMap("ip address", Utility.getIpAddress()))
 					.activeProfile(environmentVariable.getActiveProfile())
 					.build();
 		}
@@ -88,7 +85,7 @@ public class RequestHandlerService implements Function<GatewayRequest, GatewayRe
 					.statusCode(504)
 					.isBase64Encoded(false)
 					.message(exception.getMessage())
-					.header(Collections.singletonMap("ip address", ipAddress))
+					.header(Collections.singletonMap("ip address", Utility.getIpAddress()))
 					.build();
 					
 		}
