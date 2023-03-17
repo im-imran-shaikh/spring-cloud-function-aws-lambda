@@ -35,7 +35,7 @@ import lombok.extern.log4j.Log4j2;
 public final class FileOperation 
 {
 	
-	private static final String FILE_VALIDATION_ERROR = "File can't be empty or null in the file detailsDTO";
+	private final String FILE_VALIDATION_ERROR = "File can't be empty or null in the file detailsDTO";
 	private final String ERROR_MESSAGE = "Something went wrong in uploading file into the amazon s3 bucket, Inspect manually";
 	private final String FILE_CREATION_ERROR = "Something went wrong in writing content into file";
 	

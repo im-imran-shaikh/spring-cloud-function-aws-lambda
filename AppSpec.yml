@@ -1,0 +1,9 @@
+version: 0.0
+Resources:
+  - first-lambda-function:
+    Type: AWS::Lambda::Function
+    Properties:
+      Name: "first-lambda-function"
+      Alias: "dev"
+      CurrentVersion: "3"
+      TargetVersion: "4"
